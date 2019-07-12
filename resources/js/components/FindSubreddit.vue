@@ -31,7 +31,7 @@ export default {
             var reddit = new window.snoowrap({userAgent: "your bot 0.1", clientId: 'OwDJdPZR25D7qQ', clientSecret: 'CL_yIizEy1BLaJF_HWpXb0I70JI', username: 'mclarke24', password:'Ident1f1cat1on#'});
 
             //Fetch the top 25 posts from the specified subreddit
-            reddit.getTop(this.title.match(/(?<=r\/)\w+$|^\w{2,}$/)[0]).then(resp => 
+            reddit.getTop(this.title.match(/\w+/)[0]).then(resp => 
             //Extract the replies from this submission, 25 replies with 2 comments each
             resp[0].expandReplies({limit: 2, depth: 1}).then(submission => submission.comments.slice(0,25)))
             //Extract the relevant information from each comment and construct the replies object
@@ -46,7 +46,7 @@ export default {
             }).catch(err=> console.log("Too many requests, please try again later"));
         },
         checkInput(){
-            if(!this.title.match(/(?<=r\/)\w+$|^\w{2,}$/) && this.title.length > 2){
+            if(!this.title.match(/\w+$/) && this.title.length > 2){
                 this.errorMessage = "Invalid input"
                 this.isError = true;
                 console.log("error");
