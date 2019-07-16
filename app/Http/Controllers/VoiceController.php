@@ -21,7 +21,7 @@ class VoiceController extends Controller
      */
     public function index()
     {
-        $client = new TextToSpeechClient(['credentials' => 'C:\Code\reddify\My-Project-89725-d50377369ac9.json']);
+        $client = new TextToSpeechClient(['credentials' => getPathOf('cloudCredentials')]);
 
         $voices = $client->listVoices()->getVoices();
 

@@ -4,13 +4,11 @@
 
 namespace App\Http\Controllers;
 
-require('C:\Code\reddify\vendor\autoload.php');
+//require('C:\Code\reddify\vendor\autoload.php');
 
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use Intervention\Image\Font;
 use Google\Cloud\TextToSpeech\V1\AudioConfig;
 use Google\Cloud\TextToSpeech\V1\AudioEncoding;
 use Google\Cloud\TextToSpeech\V1\SsmlVoiceGender;
@@ -23,15 +21,16 @@ class PostController extends Controller
     public function createVideo(Request $request)
     {
 
+        //return $this->app['config']['constants.audioDirectory'];
         //clean up the directories where the video assets will be stored
-        PostController::clearDirectory('./audio');
-        PostController::clearDirectory('./images');
-        PostController::clearDirectory('./video');
+        PostController::clearDirectory(getPathOf('audio'));
+        PostController::clearDirectory(getPathOf('images'));
+        PostController::clearDirectory(getPathOf('videos'));
 
         //Extract the voice info, always the first item
         $voiceInfo = $request->all()[0];
         // create client object
-        $client = new TextToSpeechClient(['credentials' => 'C:\Code\reddify\My-Project-89725-d50377369ac9.json']);
+        $client = new TextToSpeechClient(['credentials' => getPathOf('cloudCredentials')]);
 
         
         // note: the voice can also be specified by name
@@ -44,7 +43,7 @@ class PostController extends Controller
 
         $contentPadding = 100; //The distance from the edge of the frame each comment will be
         $contentFontSize = 33; //The font size for the comment text
-        $fontRaleway = getcwd() . '\fonts\Raleway-Black.ttf'; //The location of the font to be used
+        $fontRaleway = getcwd() . getPathOf('font'); //The location of the font to be used
         $screenSize = (object) [];
         $screenSize->width = 1920;
         $screenSize->height = 1080;
@@ -97,7 +96,7 @@ class PostController extends Controller
 
             foreach ($sentences as $sentence) {
 
-                PostController::saveTextToSpeech($client, $sentence, $voice, getcwd() . '\audio\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
+                PostController::saveTextToSpeech($client, $sentence, $voice, getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
 
                 //Get the width of the sentence to see if it will fit in the screen
                 $sentenceSize = \App\Http\Controllers\PostController::calculateTextBox($contentFontSize, 0, $fontRaleway, $sentence);
@@ -144,11 +143,11 @@ class PostController extends Controller
                             //Since this sentence was split between two screens, we need to split its audio track in two as well
                             //Delete this sentence's audio file. We are rebuilding it
                             //return getcwd() . '\audio\comment-' . sprintf('%02d', $key) . '_' . ($sentenceNumber - 1) . '.mp3';
-                            unlink(getcwd() . '\audio\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', ($sentenceNumber - 1)) . '.mp3');
+                            unlink(getcwd() . getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', ($sentenceNumber - 1)) . '.mp3');
 
                             //now rebuild the audio, first with the sentence fragment on the previous screen
-                            PostController::saveTextToSpeech($client, $resizedStrings->left, $voice, getcwd() . '\audio\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber - 1) . '.mp3');
-                            PostController::saveTextToSpeech($client, $resizedStrings->right, $voice, getcwd() . '\audio\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
+                            PostController::saveTextToSpeech($client, $resizedStrings->left, $voice, getcwd() . getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber - 1) . '.mp3');
+                            PostController::saveTextToSpeech($client, $resizedStrings->right, $voice, getcwd() . getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
                         }
                     }
                     $avaliableScreenSpace = $screenSize->width - $endOfPreviousString->x + $contentPadding * 5.5;
@@ -165,19 +164,21 @@ class PostController extends Controller
             $client->close();
         }
 
-        $imageFiles = scandir(getcwd() . '\images');
-        $audioFiles = scandir(getcwd() . '\audio');
+        $imageFiles = scandir(getPathOf('images'));
+        $audioFiles = scandir(getPathOf('audio'));
 
         //create multiple videos consisting of the comment and it's audio track. The file name must also be recorded for later use
 
-        $fileNames = fopen(getcwd() . "\\video\\fileNames.txt", 'a');
-        file_put_contents(getcwd() . "\\video\\fileNames.txt", '');
+        $fileNames = fopen(getPathOf('videos')."\\fileNames.txt", 'a');
+        file_put_contents(getPathOf('videos')."\\fileNames.txt", '');
         for ($i = 2; $i < sizeof($imageFiles); $i++) {
 
-            exec("C:\\FFmpeg\bin\\ffmpeg -i " . getcwd() . "\\images\\" . $imageFiles[$i] . ' -i ' . getcwd() . "\\audio\\" . $audioFiles[$i] . ' ' . getcwd() . "\\video\\output(" . sprintf('%03d', $i) . ').avi > output.txt');
-            //The backslashed need to be escaped in the list of files or the concat script won't work
-            fwrite($fileNames, 'file ' . str_replace("\\", "\\\\", getcwd()) . "\\\\video\\\\output(" . sprintf('%03d', $i) . ').avi' . PHP_EOL);
+            exec(getPathOf('ffmpeg')." -i " . getPathOf('images') ."\\" . $imageFiles[$i] . ' -i ' . getPathOf('audio') ."\\" . $audioFiles[$i] . ' ' . getPathOf('videos'). "\\output(" . sprintf('%03d', $i) . ').avi > output.txt');
+            //The backslashes need to be escaped in the list of files or the concat script won't work
+            $outputFileName = 'file ' .getPathOf('videos') . '\output(' . sprintf('%03d', $i) . ').avi' . PHP_EOL;
+            fwrite($fileNames, str_replace("\\", "\\\\", $outputFileName));
 
+            //update the progress
             session(['progress' => ($progress++ / $totalSentences) > 1 ? 1 : ($progress / $totalSentences)]);
             Session::save();
         }
@@ -185,7 +186,7 @@ class PostController extends Controller
         fclose($fileNames);
 
         //concattonate all the videos into one creating the final result
-        exec("C:\\FFmpeg\\bin\\ffmpeg -f concat -safe 0 -i " . getcwd() . "\\video\\fileNames.txt -c copy " . getcwd() . "\\video\\" . date('d_M_Y-H_i') . '_reddify.avi');
+        exec(getPathOf('ffmpeg')." -f concat -safe 0 -i " . getPathOf('videos'). "\\fileNames.txt -c copy " . getPathOf('videos'). "\\" . date('d_M_Y-H_i') . '_reddify.avi');
 
         return "/download/" . date('d_M_Y-H_i') . '_reddify/avi';
     }
