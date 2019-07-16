@@ -159,6 +159,7 @@ export default {
         this.selectedVoice = this.voices[0];
       })
       .catch(err => console.log(err));
+
   }
 };
 </script>

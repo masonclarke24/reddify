@@ -28,7 +28,8 @@ export default {
             if(this.isError || this.title.length < 2)
                 return;
             
-            var reddit = new window.snoowrap({userAgent: "your bot 0.1", clientId: 'OwDJdPZR25D7qQ', clientSecret: 'CL_yIizEy1BLaJF_HWpXb0I70JI', username: 'mclarke24', password:'Ident1f1cat1on#'});
+            var reddit = new window.snoowrap({userAgent: process.env.USER_AGENT, clientId: process.env.CLIENT_ID, clientSecret: process.env.CLIENT_SECRET, 
+            username: process.env.REDDIT_USERNAME, password: process.env.REDDIT_PASSWORD});
 
             //Fetch the top 25 posts from the specified subreddit
             reddit.getTop(this.title.match(/\w+/)[0]).then(resp => 

@@ -1,5 +1,4 @@
 import Vue from 'vue';
-
 import FindSubreddit from "../js/components/FindSubreddit";
 import Replies from "../js/components/Replies";
 import CreateVideoPanel from "../js/components/CreateVideoPanel";
