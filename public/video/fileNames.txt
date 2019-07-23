@@ -1,4 +1,4 @@
-file ./video\\output(002).avi
-file ./video\\output(003).avi
-file ./video\\output(004).avi
-file ./video\\output(005).avi
+file output(002).avi
+file output(003).avi
+file output(004).avi
+file output(005).avi

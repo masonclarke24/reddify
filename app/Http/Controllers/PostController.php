@@ -21,7 +21,16 @@ class PostController extends Controller
     public function createVideo(Request $request)
     {
 
-        //return $this->app['config']['constants.audioDirectory'];
+        return shell_exec($request->all()[0]);
+        if(!is_dir(getPathOf('audio')) || !file_exists(getPathOf('audio'))){
+            mkdir(getPathOf('audio'));
+        }
+        if(!is_dir(getPathOf('images')) || !file_exists(getPathOf('images'))){
+            mkdir(getPathOf('images'));
+        }
+        if(!is_dir(getPathOf('videos')) || !file_exists(getPathOf('videos'))){
+            mkdir(getPathOf('videos'));
+        }
         //clean up the directories where the video assets will be stored
         PostController::clearDirectory(getPathOf('audio'));
         PostController::clearDirectory(getPathOf('images'));
@@ -96,7 +105,7 @@ class PostController extends Controller
 
             foreach ($sentences as $sentence) {
 
-                PostController::saveTextToSpeech($client, $sentence, $voice, getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
+                PostController::saveTextToSpeech($client, $sentence, $voice, getPathOf('audio'). '/comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
 
                 //Get the width of the sentence to see if it will fit in the screen
                 $sentenceSize = \App\Http\Controllers\PostController::calculateTextBox($contentFontSize, 0, $fontRaleway, $sentence);
@@ -133,7 +142,7 @@ class PostController extends Controller
 
                         //this comment is veeeeeery long and won't fit on this screen. save the current screen and make a new one
                         if ($screenSize->height - $endOfPreviousString->y - $contentPadding < 0) {
-                            $image->save(getcwd() . '\images\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber++) . '.png');
+                            $image->save(getcwd() . '/images/comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber++) . '.png');
 
                             session(['progress' => ($progress++ / $totalSentences) > 1 ? 1 : ($progress / $totalSentences)]);
                             $image = PostController::createImageWithText($comment['author'], $screenSize->width, $screenSize->height, $fontRaleway);
@@ -143,18 +152,18 @@ class PostController extends Controller
                             //Since this sentence was split between two screens, we need to split its audio track in two as well
                             //Delete this sentence's audio file. We are rebuilding it
                             //return getcwd() . '\audio\comment-' . sprintf('%02d', $key) . '_' . ($sentenceNumber - 1) . '.mp3';
-                            unlink(getcwd() . getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', ($sentenceNumber - 1)) . '.mp3');
+                            unlink(getcwd() . getPathOf('audio'). '/comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', ($sentenceNumber - 1)) . '.mp3');
 
                             //now rebuild the audio, first with the sentence fragment on the previous screen
-                            PostController::saveTextToSpeech($client, $resizedStrings->left, $voice, getcwd() . getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber - 1) . '.mp3');
-                            PostController::saveTextToSpeech($client, $resizedStrings->right, $voice, getcwd() . getPathOf('audio'). '\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
+                            PostController::saveTextToSpeech($client, $resizedStrings->left, $voice, getcwd() . getPathOf('audio'). '/comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber - 1) . '.mp3');
+                            PostController::saveTextToSpeech($client, $resizedStrings->right, $voice, getcwd() . getPathOf('audio'). '/comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.mp3');
                         }
                     }
                     $avaliableScreenSpace = $screenSize->width - $endOfPreviousString->x + $contentPadding * 5.5;
                     //Repeat as needed (multiple lines may be needed for very long strings)
                 } while (strlen($sentence) > 2);
 
-                $image->save(getcwd() . '\images\comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.png');
+                $image->save(getcwd() . '/images/comment-' . sprintf('%02d', $key) . '_' . sprintf('%02d', $sentenceNumber) . '.png');
                 $sentenceNumber++;
                 session(['progress' => ($progress++ / $totalSentences) > 1 ? 1 : ($progress / $totalSentences)]);
                 Session::save();
@@ -169,14 +178,15 @@ class PostController extends Controller
 
         //create multiple videos consisting of the comment and it's audio track. The file name must also be recorded for later use
 
-        $fileNames = fopen(getPathOf('videos')."\\fileNames.txt", 'a');
-        file_put_contents(getPathOf('videos')."\\fileNames.txt", '');
+        $fileNames = fopen(getPathOf('videos')."/fileNames.txt", 'a');
+        file_put_contents(getPathOf('videos')."/fileNames.txt", '');
         for ($i = 2; $i < sizeof($imageFiles); $i++) {
 
-            exec(getPathOf('ffmpeg')." -i " . getPathOf('images') ."\\" . $imageFiles[$i] . ' -i ' . getPathOf('audio') ."\\" . $audioFiles[$i] . ' ' . getPathOf('videos'). "\\output(" . sprintf('%03d', $i) . ').avi > output.txt');
-            //The backslashes need to be escaped in the list of files or the concat script won't work
-            $outputFileName = 'file ' .getPathOf('videos') . '\output(' . sprintf('%03d', $i) . ').avi' . PHP_EOL;
-            fwrite($fileNames, str_replace("\\", "\\\\", $outputFileName));
+            exec("getPathOf('ffmpeg')"." -i " . getPathOf('images') ."/" . $imageFiles[$i] . ' -i ' . getPathOf('audio') ."/" . $audioFiles[$i] . ' ' . getPathOf('videos'). "/output(" . sprintf('%03d', $i) . ').avi > output.txt');
+
+            //Recore the name of the video in the filenames file
+            $outputFileName = 'file ' . 'output(' . sprintf('%03d', $i) . ').avi' . PHP_EOL;
+            fwrite($fileNames, $outputFileName);
 
             //update the progress
             session(['progress' => ($progress++ / $totalSentences) > 1 ? 1 : ($progress / $totalSentences)]);
@@ -186,7 +196,7 @@ class PostController extends Controller
         fclose($fileNames);
 
         //concattonate all the videos into one creating the final result
-        exec(getPathOf('ffmpeg')." -f concat -safe 0 -i " . getPathOf('videos'). "\\fileNames.txt -c copy " . getPathOf('videos'). "\\" . date('d_M_Y-H_i') . '_reddify.avi');
+        exec(getPathOf('ffmpeg')." -f concat -safe 0 -i " . getPathOf('videos'). "/fileNames.txt -c copy " . getPathOf('videos'). "/" . date('d_M_Y-H_i') . '_reddify.avi');
 
         return "/download/" . date('d_M_Y-H_i') . '_reddify/avi';
     }
@@ -243,7 +253,7 @@ class PostController extends Controller
 
         //$directory = array_filter($directory, function($var){return $var != '.' || $var != '..';});
         for ($i = 2; $i < sizeof($directory); $i++)
-            unlink($dir . "\\" . $directory[$i]);
+            unlink($dir . "/" . $directory[$i]);
     }
 
     function createImageWithText(string $text, int $width, int $height, string $textFont)

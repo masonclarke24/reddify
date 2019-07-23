@@ -11,6 +11,7 @@
 
 <script>
 const snoowrap = require('../snoowrap-v1');
+import axios from "axios";
 export default {
     name: "FindSubreddit",
     data(){
@@ -25,6 +26,9 @@ export default {
 
             e.preventDefault();
             //Don't try and find a subreddit if the entry is invalid
+
+            axios.post("createVideo", [this.title, [1,2,3]]).then(resp => console.log(resp.data)).catch(err => console.log(err));
+            return;
             if(this.isError || this.title.length < 2)
                 return;
             

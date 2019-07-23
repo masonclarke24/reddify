@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-require('C:\Code\reddify\vendor\autoload.php');
 use \App\Http\Controllers\PostController;
 use Illuminate\Http\Request;
 use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
@@ -57,7 +56,7 @@ class VoiceController extends Controller
     public function show(Request $request)
     {
         // create client object
-        $client = new TextToSpeechClient(['credentials' => 'C:\Code\reddify\My-Project-89725-d50377369ac9.json']);
+        $client = new TextToSpeechClient(['credentials' => getPathOf('cloudCredentials')]);
 
         $gender = strtoupper($request->all()[2]) == "MALE" ? SsmlVoiceGender::MALE : SsmlVoiceGender::FEMALE; 
         $voice = (new VoiceSelectionParams())

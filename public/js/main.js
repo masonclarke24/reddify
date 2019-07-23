@@ -2005,6 +2005,8 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 //
 //
 //
@@ -2017,6 +2019,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 var snoowrap = __webpack_require__(/*! ../snoowrap-v1 */ "./resources/js/snoowrap-v1.js");
+
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "FindSubreddit",
@@ -2034,6 +2037,12 @@ var snoowrap = __webpack_require__(/*! ../snoowrap-v1 */ "./resources/js/snoowra
 
       e.preventDefault(); //Don't try and find a subreddit if the entry is invalid
 
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.post("createVideo", [this.title, [1, 2, 3]]).then(function (resp) {
+        return console.log(resp.data);
+      })["catch"](function (err) {
+        return console.log(err);
+      });
+      return;
       if (this.isError || this.title.length < 2) return;
       var reddit = new window.snoowrap({
         userAgent: "your bot 0.1",
