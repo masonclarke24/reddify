@@ -2,7 +2,9 @@
 The purpose of this project is to demonstrate the use of laravel and vue.js in a web application. This project creates a narrated video from the top 25 replies of the most recent submission in a given subreddit. This solution was designed to work for [r/AskReddit](https://www.Reddit.com/r/AskReddit) but will work for any subreddit that does not have images for a submission. The video narration is provided by Google's Speech Api.
 
 # Usage Example
-Video demonstrating the output of an AskReddit submission
+Creating a video:
+![Alt-text](https://github.com/masonclarke24/reddify/blob/master/reddify.png)
+Video demonstrating the output of an AskReddit submission:
 [![Output sample](https://img.youtube.com/vi/rIr2_R13LJ8/0.jpg)](https://www.youtube.com/watch?v=rIr2_R13LJ8)
 
 # Development Setup
